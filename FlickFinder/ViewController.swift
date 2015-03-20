@@ -29,6 +29,9 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        flickTitleLabel.alpha = 0.0
+        flickTitleLabel.lineBreakMode = .ByWordWrapping
+        flickTitleLabel.numberOfLines = 0
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -51,18 +54,42 @@ class ViewController: UIViewController {
     }
 
     @IBAction func searchByTerm(sender: AnyObject) {
-        let extraParams: [String:String] = [
-            "text": flickSearchTermText.text
-        ]
-        getImageFromFlickr(extraParams)
+        if flickSearchTermText.text.utf16Count > 0 {
+            let extraParams: [String:String] = [
+                "text": flickSearchTermText.text
+            ]
+            getImageFromFlickr(extraParams)
+        } else {
+            flickTitleLabel.alpha = 1.0
+            self.flickTitleLabel.text = "Please enter a search term."
+        }
+    }
+    
+    func validateCoordinate(text: String, degrees: Int) -> Bool {
+        if let coordinateValue = text.toInt() {
+            if -degrees <= coordinateValue && coordinateValue <= degrees {
+                return true
+            }
+        }
+        return false
     }
 
     @IBAction func searchByLatLon(sender: UIButton) {
-        let extraParams: [String:String] = [
-            "lat": flickLatitudeText.text,
-            "lon": flickLongitudeText.text
-        ]
-        getImageFromFlickr(extraParams)
+        if flickLatitudeText.text.utf16Count > 0 && flickLongitudeText.text.utf16Count > 0 {
+            if validateCoordinate(flickLatitudeText.text, degrees: 90) && validateCoordinate(flickLongitudeText.text, degrees: 180) {
+                let extraParams: [String:String] = [
+                    "lat": flickLatitudeText.text,
+                    "lon": flickLongitudeText.text
+                ]
+                getImageFromFlickr(extraParams)
+            } else {
+                flickTitleLabel.alpha = 1.0
+                self.flickTitleLabel.text = "The latitude / longitude coordinate is not valid."
+            }
+        } else {
+            flickTitleLabel.alpha = 1.0
+            self.flickTitleLabel.text = "Please enter longitude and latitude fields."
+        }
     }
     
     func getImageFromFlickr(extraParams: [String:String]) {
@@ -80,6 +107,7 @@ class ViewController: UIViewController {
             methodArguments[paramName] = extraParams[paramName]
         }
         
+        self.flickTitleLabel.alpha = 1.0
         
         /* 3 - Initialize session and url */
         let session = NSURLSession.sharedSession()
